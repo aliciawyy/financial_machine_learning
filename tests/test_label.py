@@ -15,9 +15,14 @@ class DailyPriceTest(FMLTestCase):
     def test_ewm_vol(self):
         price = label.DailyPrice(self.close["2016-06":"2016-12"])
         df = price.ewm_vol(50)
-        self.assert_frame_equal(df, "close_ewm_vol")
+        self.assert_frame_equal(df, "ret_ewm_vol")
 
     def test_daily_rolling_vol(self):
         price = label.DailyPrice(self.close["2016-06":"2016-12"])
         df = price.rolling_vol(50)
-        self.assert_frame_equal(df, "close_rolling_vol")
+        self.assert_frame_equal(df, "ret_rolling_vol")
+
+    def test_rolling_bounds(self):
+        price = label.DailyPrice(self.close[:"1993-06"])
+        df = price.rolling_bounds()
+        self.assert_frame_equal(df, "ret_rolling_bounds")
