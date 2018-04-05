@@ -1,5 +1,5 @@
-from learning.utils import DataHandler
-from learning import label
+from fml.utils import DataHandler
+from fml import label
 
 from .mockutils import FMLTestCase
 
@@ -10,7 +10,7 @@ class DailyPriceTest(FMLTestCase):
     def setUpClass(cls):
         super(DailyPriceTest, cls).setUpClass()
         cls.data = DataHandler().get_time_series_data("SPY")
-        cls.close = cls.data["Close"]
+        cls.close = cls.data["Adj Close"]
 
     def test_ewm_vol(self):
         price = label.DailyPrice(self.close["2016-06":"2016-12"])

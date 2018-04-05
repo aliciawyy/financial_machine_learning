@@ -4,7 +4,7 @@ from unittest import TestCase
 import pandas as pd
 import pandas.util.testing as pdt
 
-from learning.utils import read_ts_csv
+from fml.utils import read_ts_csv
 
 
 class FMLTestCase(TestCase):
