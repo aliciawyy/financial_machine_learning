@@ -1,3 +1,4 @@
+from parameterized import parameterized
 from fml.utils import DataHandler
 from fml import label
 
@@ -22,10 +23,11 @@ class DailyPriceTest(FMLTestCase):
         df = price.rolling_vol(50)
         self.assert_frame_equal(df, "ret_rolling_vol")
 
-    def test_rolling_bounds(self):
+    @parameterized.expand([("with_mean", True), ("without_mean", False)])
+    def test_rolling_bounds(self, name, with_mean):
         price = label.DailyPrice(self.close[:"1993-06"])
-        df = price.rolling_bounds()
-        self.assert_frame_equal(df, "ret_rolling_bounds")
+        df = price.rolling_bounds(with_mean=with_mean)
+        self.assert_frame_equal(df, "ret_rolling_bounds_" + name)
 
     def test_future_ret_window_view(self):
         price = label.DailyPrice(self.close["1993-06"])

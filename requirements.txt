@@ -1,4 +1,5 @@
 pandas
 pytest
 pytest-cov
+parameterized
 sheepts

@@ -20,11 +20,16 @@ class DailyPrice(object):
         return self.pct_change().rolling(window, min_periods=min_periods).std()
 
     def rolling_bounds(
-            self, window=100, min_periods=1, upper_coef=1., lower_coef=1.):
+            self, window=100, min_periods=1, upper_coef=1., lower_coef=1.,
+            with_mean=True):
         vol = self.rolling_vol(window, min_periods=min_periods)
+        offset = 0.
+        if with_mean:
+            ret = self.pct_change()
+            offset = ret.rolling(window, min_periods=min_periods).mean()
         return pd.concat({
-            "upper_bound": upper_coef * vol,
-            "lower_bound": - lower_coef * vol
+            "upper_bound": offset + upper_coef * vol,
+            "lower_bound": offset - lower_coef * vol
         }, axis=1)
 
     def future_ret_window_view(self, window=10):
