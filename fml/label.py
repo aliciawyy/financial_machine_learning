@@ -1,11 +1,12 @@
 import pandas as pd
+import sheepts
 
 
 class DailyPrice(object):
     def __init__(self, price_series):
         self.data = price_series
 
-    @property
+    @sheepts.lazy_property
     def clean_data(self):
         return self.data.asfreq("B", method="pad")
 

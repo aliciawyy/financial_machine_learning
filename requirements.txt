@@ -1,3 +1,4 @@
 pandas
 pytest
 pytest-cov
+sheepts==0.0.2a0

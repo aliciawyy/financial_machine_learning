@@ -3,8 +3,7 @@ from unittest import TestCase
 
 import pandas as pd
 import pandas.util.testing as pdt
-
-from fml.utils import read_ts_csv
+import sheepts
 
 
 class FMLTestCase(TestCase):
@@ -21,5 +20,5 @@ class FMLTestCase(TestCase):
         if generate_ref:
             df.to_csv(filename)
         else:
-            df_ref = read_ts_csv(filename)
+            df_ref = sheepts.read_time_series_csv(filename)
             pdt.assert_frame_equal(df_ref, df, check_less_precise=precision)
