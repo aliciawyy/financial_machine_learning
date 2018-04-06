@@ -1,3 +1,4 @@
+import operator
 import pandas as pd
 import sheepts
 
@@ -37,8 +38,48 @@ class DailyPrice(object):
         df = pd.concat({i: self.pct_change(i).shift(-i) for i in cols}, axis=1)
         return df[cols]
 
-    def triple_barrier(
-            self, window=20, upper_coef=1., lower_coef=1., vol_window=100):
-        df = self.rolling_bounds(
-            vol_window, upper_coef=upper_coef, lower_coef=lower_coef
-        )
+    def triple_barrier(self, window=10, bounds=None):
+        """
+        Returns a boolean Series:
+            True if the upper bound is touched first in the window;
+            False if lower bound is touched first.
+            When no bound is touched, return the sign of the perf within the
+            window range.
+
+        """
+        cross_time = self.bounds_cross_time(window, bounds)
+        label = cross_time["upper_bound"] < cross_time["lower_bound"]
+
+        is_no_touch = cross_time["upper_bound"] == cross_time["lower_bound"]
+        ret = self.pct_change(window).shift(-window)
+        label.loc[is_no_touch] = ret.loc[is_no_touch] > 0
+        return label
+
+    def bounds_cross_time(self, window=10, bounds=None):
+        if bounds is None:
+            bounds = self.rolling_bounds()
+        df = self.future_ret_window_view(window)
+        df = df.join(bounds)
+        return pd.concat({
+            side: df.apply(_CrossTime(window, side), axis=1)
+            for side in ["lower_bound", "upper_bound"]
+        }, axis=1)
+
+
+class _CrossTime(sheepts.StringMixin):
+    def __init__(self, window, side="upper_bound"):
+        self.window_limit = window + 1
+        self.side = side
+
+    @sheepts.lazy_property
+    def compare(self):
+        return operator.gt if self.side == "upper_bound" else operator.lt
+
+    @sheepts.lazy_property
+    def window_cols(self):
+        return list(range(1, self.window_limit))
+
+    def __call__(self, row):
+        is_cross = self.compare(row.loc[self.window_cols], row[self.side])
+        cross_times = is_cross[is_cross].index
+        return self.window_limit if len(cross_times) == 0 else cross_times[0]
