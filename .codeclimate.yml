@@ -1,5 +1,9 @@
-version: "2"         # required to adjust maintainability checks
-engines:
+version: "2"
+checks:
+  argument-count:
+    config:
+      threshold: 6
+plugins:
   duplication:
     enabled: true
     config:
@@ -15,10 +19,5 @@ engines:
     enabled: true
   sonar-python:
     enabled: true
-ratings:
-  paths:
-  - "**.module"
-  - "**.py"
-  - "**.sh"
-exclude_paths:
+exclude_patterns:
   - notebooks/

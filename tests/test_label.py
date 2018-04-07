@@ -14,15 +14,11 @@ class DailyPriceTest(FMLTestCase):
         cls.close = cls.data["Adj Close"]
         cls.price_small = label.DailyPrice(cls.close[:"1993-06"])
 
-    def test_ewm_vol(self):
+    @parameterized.expand(["ewm_vol", "rolling_vol"])
+    def test_vol(self, method_name):
         price = label.DailyPrice(self.close["2016-06":"2016-12"])
-        df = price.ewm_vol(50)
-        self.assert_frame_equal(df, "ret_ewm_vol")
-
-    def test_daily_rolling_vol(self):
-        price = label.DailyPrice(self.close["2016-06":"2016-12"])
-        df = price.rolling_vol(50)
-        self.assert_frame_equal(df, "ret_rolling_vol")
+        df = getattr(price, method_name)(50)
+        self.assert_frame_equal(df, "ret_" + method_name)
 
     @parameterized.expand([("with_mean", True), ("without_mean", False)])
     def test_rolling_bounds(self, name, with_mean):
