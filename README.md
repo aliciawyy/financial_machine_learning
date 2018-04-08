@@ -4,6 +4,4 @@
 [![codecov](https://codecov.io/gh/aliciawyy/financial_machine_learning/branch/master/graph/badge.svg)](https://codecov.io/gh/aliciawyy/financial_machine_learning)
 [![Maintainability](https://api.codeclimate.com/v1/badges/5159e42d9650d44240f7/maintainability)](https://codeclimate.com/github/aliciawyy/financial_machine_learning/maintainability)
 
-Reading notes and code snippets about Financial machine learning.
-
-The library supports Python 3.3+.
+Notes about financial machine learning.

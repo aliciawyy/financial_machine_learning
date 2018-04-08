@@ -1,5 +1,4 @@
 import operator
-from functools import lru_cache
 import pandas as pd
 import sheepts
 
@@ -63,7 +62,6 @@ class Price(object):
         label.loc[is_no_touch] = no_touch_labels
         return label
 
-    @lru_cache()
     def bounds_cross_time(self, window=10, bounds=None):
         if bounds is None:
             bounds = self.rolling_bounds()
