@@ -3,13 +3,15 @@ import pandas as pd
 import sheepts
 
 
-class DailyPrice(object):
-    def __init__(self, price_series):
+class Price(object):
+    def __init__(self, price_series, freq="B"):
         self.data = price_series
+        self.freq = freq
 
     @sheepts.lazy_property
     def clean_data(self):
-        return self.data.asfreq("B", method="pad")
+        data = self.data.asfreq(freq=self.freq) if self.freq else self.data
+        return data.fillna(method="pad")
 
     def pct_change(self, periods=1):
         return self.clean_data.pct_change(periods=periods)
@@ -38,7 +40,7 @@ class DailyPrice(object):
         df = pd.concat({i: self.pct_change(i).shift(-i) for i in cols}, axis=1)
         return df[cols]
 
-    def triple_barrier(self, window=10, bounds=None):
+    def triple_barrier(self, window=10, bounds=None, n_labels=2):
         """
         Returns a boolean Series:
             True if the upper bound is touched first in the window;
@@ -51,8 +53,13 @@ class DailyPrice(object):
         label = cross_time["upper_bound"] < cross_time["lower_bound"]
 
         is_no_touch = cross_time["upper_bound"] == cross_time["lower_bound"]
-        ret = self.pct_change(window).shift(-window)
-        label.loc[is_no_touch] = ret.loc[is_no_touch] > 0
+        if n_labels == 2:
+            ret = self.pct_change(window).shift(-window)
+            no_touch_labels = ret.loc[is_no_touch] > 0
+        else:
+            label = label.map({True: 1, False: -1})
+            no_touch_labels = 0
+        label.loc[is_no_touch] = no_touch_labels
         return label
 
     def bounds_cross_time(self, window=10, bounds=None):
