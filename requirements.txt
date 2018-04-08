@@ -1,6 +1,5 @@
-numpy
 pandas
 pytest
 pytest-cov
 parameterized
-sheepts
+sheepts==0.0.3a

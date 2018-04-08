@@ -1,23 +1,6 @@
 import operator
-import numpy as np
 import pandas as pd
-import multiprocessing as mp
 import sheepts
-
-
-def _apply_df(args):
-    df, func, kwargs = args
-    return df.apply(func, **kwargs)
-
-
-def apply_by_multiprocessing(df, func, n_cpu=0, **kwargs):
-    n_cpu = n_cpu or mp.cpu_count()
-    pool = mp.Pool(processes=n_cpu)
-    result = pool.map(
-        _apply_df, [(d, func, kwargs) for d in np.array_split(df, n_cpu)]
-    )
-    pool.close()
-    return pd.concat(list(result))
 
 
 class Price(object):
@@ -85,7 +68,7 @@ class Price(object):
         df = self.future_ret_window_view(window)
         df = df.join(bounds)
         return pd.concat({
-            side: apply_by_multiprocessing(
+            side: sheepts.apply_by_multiprocessing(
                 df, _CrossTime(window, side), axis=1
             )
             for side in ["lower_bound", "upper_bound"]
