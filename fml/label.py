@@ -1,4 +1,5 @@
 import operator
+from functools import lru_cache
 import pandas as pd
 import sheepts
 
@@ -42,7 +43,7 @@ class Price(object):
 
     def triple_barrier(self, window=10, bounds=None, n_labels=2):
         """
-        Returns a boolean Series:
+        Returns a boolean Series when n_labels = 2:
             True if the upper bound is touched first in the window;
             False if lower bound is touched first.
             When no bound is touched, return the sign of the perf within the
@@ -62,6 +63,7 @@ class Price(object):
         label.loc[is_no_touch] = no_touch_labels
         return label
 
+    @lru_cache()
     def bounds_cross_time(self, window=10, bounds=None):
         if bounds is None:
             bounds = self.rolling_bounds()
