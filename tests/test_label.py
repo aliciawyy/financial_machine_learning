@@ -36,6 +36,10 @@ class DailyPriceTest(FMLTestCase):
         name = "ret_triple_barrier_labels{}".format(n_labels)
         self.assert_frame_equal(df, name)
 
-    def test_bounds_cross_time(self):
-        df = self.price_small.bounds_cross_time()
-        self.assert_frame_equal(df, "ret_bounds_cross_time")
+    @parameterized.expand([
+        "bounds_cross_time",
+        "num_concurrent_events",
+    ])
+    def test_method_with_default_args(self, method_name):
+        df = getattr(self.price_small, method_name)()
+        self.assert_frame_equal(df, "ret_" + method_name)

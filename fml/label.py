@@ -74,6 +74,14 @@ class Price(object):
             for side in ["lower_bound", "upper_bound"]
         }, axis=1)
 
+    def num_concurrent_events(self, window=10, bounds=None):
+        cross_time = self.bounds_cross_time(window, bounds)
+        df = cross_time.min(axis=1).to_frame("cross")
+        windows = list(range(1, window + 2))
+        for win in windows:
+            df[win] = df["cross"].shift(win) >= win
+        return df[windows].sum(axis=1).rename("num_concurrent_events")
+
 
 class _CrossTime(sheepts.StringMixin):
     def __init__(self, window, side="upper_bound"):
