@@ -1,5 +1,6 @@
-import hashlib
 from datetime import datetime
+import hashlib
+import json
 
 import sheepts
 
@@ -30,6 +31,15 @@ class Block(sheepts.StringMixin):
 
     def next_block(self, data):
         return Block(self.index + 1, data, self.hash)
+
+    def dumps(self):
+        data = {
+            "index": str(self.index),
+            "data": str(self.data),
+            "timestamp": str(self.timestamp),
+            "hash": self.hash
+        }
+        return json.dumps(data)
 
 
 class GenesisBlock(Block):

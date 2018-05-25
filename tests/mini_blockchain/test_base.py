@@ -1,5 +1,6 @@
 from unittest import TestCase
 from datetime import datetime
+import json
 import mock
 
 from mini_blockchain import base
@@ -37,3 +38,16 @@ class BlockTest(TestCase):
         next_block = self.block.next_block(2.015)
         assert 3 == next_block.index
         assert self.block_hash == next_block.previous_hash
+
+    def test_dumps(self):
+        result = self.block.dumps()
+        data = json.loads(result)
+        expected = {
+            "index": "2",
+            "data": "0.125",
+            "timestamp": "2018-05-20 00:00:00",
+            "hash": self.block_hash
+        }
+        assert len(expected) == len(data)
+        for k, v in expected.items():
+            assert v == data[k]

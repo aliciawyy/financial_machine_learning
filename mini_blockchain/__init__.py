@@ -1,1 +1,1 @@
-from .base import Block
+from .base import Block, GenesisBlock
