@@ -10,7 +10,7 @@ def utc_now():
 
 def get_hash_hex(*args):
     sha = hashlib.sha256()
-    info = "".join(map(str, args)).encode('utf-8')
+    info = str.encode("".join(map(str, args)))
     sha.update(info)
     return sha.hexdigest()
 
