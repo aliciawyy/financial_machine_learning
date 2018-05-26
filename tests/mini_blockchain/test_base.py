@@ -2,6 +2,7 @@ from unittest import TestCase
 from datetime import datetime
 import json
 import mock
+from parameterized import parameterized
 
 from mini_blockchain import base
 
@@ -85,6 +86,14 @@ class BlockChainTest(TestCase):
         miner_address = "d6a782ef"
         new_block_json = self.block_chain.mine(miner_address)
         new_block = base.Block.from_json(new_block_json)
-        assert 225 == new_block.proof_of_work
+        assert 85022 == new_block.proof_of_work
         assert 1 == len(new_block.transactions)
         assert miner_address == new_block.transactions[-1]["to"]
+
+
+@parameterized.expand([
+    (base.PoWByNumLetters(9), 25, 225),
+    (base.PoWByHashHead("00"), 25, 18),
+])
+def test_pow(pow_, last_proof, expected_proof):
+    assert expected_proof == pow_(last_proof)

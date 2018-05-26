@@ -73,7 +73,12 @@ class GenesisBlock(Block):
         super(GenesisBlock, self).__init__(0, data, "0")
 
 
-class ProofOfWork(sheepts.StringMixin):
+class PoWByNumLetters(sheepts.StringMixin):
+    """
+    Proof Of Work
+    The goal of PoW is to discover a number which solves a problem.
+    The number must be difficult to find but easy to verify.
+    """
     def __init__(self, num_letters=9):
         self.num_letters = num_letters
 
@@ -86,8 +91,27 @@ class ProofOfWork(sheepts.StringMixin):
         return current_proof
 
 
+class PoWByHashHead(sheepts.StringMixin):
+    """
+    In Bitcoin, the Proof of Work algorithm is called Hashcash.
+    It is not too different from the basic example below.
+    """
+    def __init__(self, valid_head="0000"):
+        self.valid_head = valid_head
+
+    def __call__(self, last_proof):
+        proof = 0
+        while get_hash_hex(last_proof, proof)[:self.head_len] != \
+                self.valid_head:
+            proof += 1
+        return proof
+
+    @sheepts.lazy_property
+    def head_len(self):
+        return len(self.valid_head)
+
+
 class BlockChain(sheepts.StringMixin):
-    num_letters = 9
 
     def __init__(self, blocks, transactions_current_node):
         self.blocks = blocks
@@ -95,12 +119,7 @@ class BlockChain(sheepts.StringMixin):
 
     def mine(self, miner_address):
         proof = self.get_proof_of_work(self.last_proof_of_work)
-        transaction_for_miner = {
-            "from": "network",
-            "to": miner_address,
-            "amount": 1
-        }
-        self.transactions_current_node.append(transaction_for_miner)
+        self.add_transaction("network", miner_address, 1)
         data = {
             BlockTag.proof_of_work: proof,
             BlockTag.transactions: list(self.transactions_current_node)
@@ -110,9 +129,17 @@ class BlockChain(sheepts.StringMixin):
         self.transactions_current_node = []
         return new_block.dumps()
 
+    def add_transaction(self, from_, to, amount):
+        transaction = {
+            "from": from_,
+            "to": to,
+            "amount": amount
+        }
+        self.transactions_current_node.append(transaction)
+
     @sheepts.lazy_property
     def get_proof_of_work(self):
-        return ProofOfWork(num_letters=self.num_letters)
+        return PoWByHashHead()
 
     @property
     def last_proof_of_work(self):
