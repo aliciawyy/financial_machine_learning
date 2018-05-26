@@ -36,11 +36,6 @@ class Block(sheepts.StringMixin):
     def next_block(self, data):
         return Block(self.index + 1, data, self.hash)
 
-    def dumps(self):
-        data = dict(self.__dict__)
-        data["timestamp"] = str(data["timestamp"])
-        return json.dumps(data)
-
     @property
     def proof_of_work(self):
         return self.data.get(BlockTag.proof_of_work)
@@ -48,6 +43,11 @@ class Block(sheepts.StringMixin):
     @property
     def transactions(self):
         return self.data.get(BlockTag.transactions)
+
+    def dumps(self):
+        data = dict(self.__dict__)
+        data["timestamp"] = str(data["timestamp"])
+        return json.dumps(data)
 
     @classmethod
     def from_json(cls, s_json):
