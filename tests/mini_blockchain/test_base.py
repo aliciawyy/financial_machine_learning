@@ -13,7 +13,8 @@ class BlockTest(TestCase):
         )
         patcher.start()
         self.addCleanup(patcher.stop)
-        self.block = base.Block(2, 0.125, "2584a14d")
+        self.previous_hash = "2584a14d"
+        self.block = base.Block(2, 0.125, self.previous_hash)
         self.block_hash = (
             "5cf131d3b1007bb8de4335a1d2eae51b9cb83c8e61"
             "2bde3d41d2f4a6f5a8536b"
@@ -43,11 +44,47 @@ class BlockTest(TestCase):
         result = self.block.dumps()
         data = json.loads(result)
         expected = {
-            "index": "2",
-            "data": "0.125",
+            "index": 2,
+            "data": 0.125,
             "timestamp": "2018-05-20 00:00:00",
-            "hash": self.block_hash
+            "previous_hash": self.previous_hash,
+            "hash_": self.block_hash
         }
         assert len(expected) == len(data)
         for k, v in expected.items():
             assert v == data[k]
+
+    def test_from_json(self):
+        result = self.block.dumps()
+        new_block = base.Block.from_json(result)
+        assert self.block_hash == new_block.hash
+        assert self.previous_hash == new_block.previous_hash
+        assert self.block.timestamp == new_block.timestamp
+        assert self.block.index == new_block.index
+
+    def test_proof_of_work(self):
+        block = base.Block(
+            2, {base.BlockTag.proof_of_work: 25}, self.previous_hash
+        )
+        assert 25 == block.proof_of_work
+
+
+class BlockChainTest(TestCase):
+    def setUp(self):
+        genesis_block = base.GenesisBlock("Genesis")
+        blocks = [
+            genesis_block,
+            genesis_block.next_block({base.BlockTag.proof_of_work: 25})
+        ]
+        self.block_chain = base.BlockChain(blocks, [])
+
+    def test_last_proof_of_work(self):
+        assert 25 == self.block_chain.last_proof_of_work
+
+    def test_mine(self):
+        miner_address = "d6a782ef"
+        new_block_json = self.block_chain.mine(miner_address)
+        new_block = base.Block.from_json(new_block_json)
+        assert 225 == new_block.proof_of_work
+        assert 1 == len(new_block.transactions)
+        assert miner_address == new_block.transactions[-1]["to"]
