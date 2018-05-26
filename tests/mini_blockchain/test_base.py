@@ -49,7 +49,7 @@ class BlockTest(TestCase):
             "data": 0.125,
             "timestamp": "2018-05-20 00:00:00",
             "previous_hash": self.previous_hash,
-            "hash_": self.block_hash
+            "hash": self.block_hash
         }
         assert len(expected) == len(data)
         for k, v in expected.items():

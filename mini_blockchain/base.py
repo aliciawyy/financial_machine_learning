@@ -24,22 +24,14 @@ def get_hash_hex(*args):
 
 class Block(sheepts.StringMixin):
 
-    def __init__(self, index, data, previous_hash, timestamp=None,
-                 hash_=None):
+    def __init__(self, index, data, previous_hash):
         self.index = index
         self.data = data
-        self.timestamp = utc_now() if timestamp is None \
-            else to_datetime(timestamp)
+        self.timestamp = utc_now()
         self.previous_hash = previous_hash
-        self._hash = hash_
-
-    @property
-    def hash(self):
-        if self._hash is None:
-            self._hash = get_hash_hex(
-                self.index, self.data, self.timestamp, self.previous_hash
-            )
-        return self._hash
+        self.hash = get_hash_hex(
+            self.index, self.data, self.timestamp, self.previous_hash
+        )
 
     def next_block(self, data):
         return Block(self.index + 1, data, self.hash)
@@ -50,7 +42,7 @@ class Block(sheepts.StringMixin):
             "data": self.data,
             "timestamp": str(self.timestamp),
             "previous_hash": self.previous_hash,
-            "hash_": self.hash,
+            "hash": self.hash,
         }
         return json.dumps(data)
 
@@ -65,7 +57,12 @@ class Block(sheepts.StringMixin):
     @classmethod
     def from_json(cls, s_json):
         kwargs = json.loads(s_json)
-        return cls(**kwargs)
+        hash_ = kwargs.pop("hash")
+        timestamp = to_datetime(kwargs.pop("timestamp"))
+        block = cls(**kwargs)
+        block.hash = hash_
+        block.timestamp = timestamp
+        return block
 
 
 class GenesisBlock(Block):
