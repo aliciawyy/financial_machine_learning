@@ -37,13 +37,8 @@ class Block(sheepts.StringMixin):
         return Block(self.index + 1, data, self.hash)
 
     def dumps(self):
-        data = {
-            "index": self.index,
-            "data": self.data,
-            "timestamp": str(self.timestamp),
-            "previous_hash": self.previous_hash,
-            "hash": self.hash,
-        }
+        data = dict(self.__dict__)
+        data["timestamp"] = str(data["timestamp"])
         return json.dumps(data)
 
     @property
