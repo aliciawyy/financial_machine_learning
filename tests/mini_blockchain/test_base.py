@@ -15,10 +15,10 @@ class BlockTest(TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
         self.previous_hash = "2584a14d"
-        self.block = base.Block(2, 0.125, self.previous_hash)
+        self.block = base.Block(2, [], 25, self.previous_hash)
         self.block_hash = (
-            "5cf131d3b1007bb8de4335a1d2eae51b9cb83c8e61"
-            "2bde3d41d2f4a6f5a8536b"
+            "3b45a17bbeebb826af98753eaf194a6d873899c8bab3fdd"
+            "9ec83f47bdc38de8a"
         )
 
     def test_hash(self):
@@ -29,15 +29,15 @@ class BlockTest(TestCase):
         return [
             (self.block, self.block_hash),
             (base.GenesisBlock(3.14159),
-             "0df631f65c4e3295e23d4f0dd5e71ade459cbfc024"
-             "a737ac1f5bd727ac711499"),
-            (self.block.next_block(2.015),
-             "9708ea4c0176b07648b7133382b9af8a0acb9e15a41774f"
-             "467157af9c306671f")
+             "675365444072aa216c29e4d3764632ab5f77f5d8489e1d"
+             "6020c381bddba3a9ad"),
+            (self.block.next_block([2.015], 45),
+             "3e1ba9cba7c75cd00ea12f2c418742bbda98a403c214c8"
+             "65a0553185015382dc")
         ]
 
     def test_next_block(self):
-        next_block = self.block.next_block(2.015)
+        next_block = self.block.next_block([2.015], 45)
         assert 3 == next_block.index
         assert self.block_hash == next_block.previous_hash
 
@@ -46,7 +46,8 @@ class BlockTest(TestCase):
         data = json.loads(result)
         expected = {
             "index": 2,
-            "data": 0.125,
+            "transactions": [],
+            "proof_of_work": 25,
             "timestamp": "2018-05-20 00:00:00",
             "previous_hash": self.previous_hash,
             "hash": self.block_hash
@@ -65,7 +66,7 @@ class BlockTest(TestCase):
 
     def test_proof_of_work(self):
         block = base.Block(
-            2, {base.BlockTag.proof_of_work: 25}, self.previous_hash
+            2, [], 25, self.previous_hash
         )
         assert 25 == block.proof_of_work
 
@@ -75,7 +76,7 @@ class BlockChainTest(TestCase):
         genesis_block = base.GenesisBlock("Genesis")
         blocks = [
             genesis_block,
-            genesis_block.next_block({base.BlockTag.proof_of_work: 25})
+            genesis_block.next_block([], 25)
         ]
         self.block_chain = base.BlockChain(blocks, [])
 

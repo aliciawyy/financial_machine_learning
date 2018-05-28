@@ -6,11 +6,6 @@ from pandas import to_datetime
 import sheepts
 
 
-class BlockTag(object):
-    proof_of_work = "proof_of_work"
-    transactions = "transactions"
-
-
 def utc_now():
     return datetime.utcnow()
 
@@ -23,25 +18,22 @@ def compute_hash(*args):
 
 class Block(sheepts.StringMixin):
 
-    def __init__(self, index, data, previous_hash):
+    def __init__(self, index, transactions, proof_of_work, previous_hash):
         self.index = index
-        self.data = data
+        self.transactions = transactions
+        self.proof_of_work = proof_of_work
         self.previous_hash = previous_hash
         self.timestamp = utc_now()
         self.hash = compute_hash(
-            self.index, self.data, self.timestamp, self.previous_hash
+            self.index,
+            self.transactions,
+            self.proof_of_work,
+            self.timestamp,
+            self.previous_hash
         )
 
-    def next_block(self, data):
-        return Block(self.index + 1, data, self.hash)
-
-    @property
-    def proof_of_work(self):
-        return self.data.get(BlockTag.proof_of_work)
-
-    @property
-    def transactions(self):
-        return self.data.get(BlockTag.transactions)
+    def next_block(self, transactions, proof_of_work):
+        return Block(self.index + 1, transactions, proof_of_work, self.hash)
 
     def dumps(self):
         data = dict(self.__dict__)
@@ -60,8 +52,8 @@ class Block(sheepts.StringMixin):
 
 
 class GenesisBlock(Block):
-    def __init__(self, data):
-        super(GenesisBlock, self).__init__(0, data, "0")
+    def __init__(self, t):
+        super(GenesisBlock, self).__init__(0, [], 0, "0")
 
 
 class PoWByNumLetters(sheepts.StringMixin):
@@ -110,11 +102,10 @@ class BlockChain(sheepts.StringMixin):
     def mine(self, miner_address):
         proof = self.get_proof_of_work(self.last_proof_of_work)
         self.add_transaction("network", miner_address, 1)
-        data = {
-            BlockTag.proof_of_work: proof,
-            BlockTag.transactions: list(self.unconfirmed_transactions)
-        }
-        new_block = self.last_block.next_block(data)
+        new_block = self.last_block.next_block(
+            transactions=list(self.unconfirmed_transactions),
+            proof_of_work=proof
+        )
         self.chain.append(new_block)
         self.unconfirmed_transactions = []
         return new_block.dumps()
