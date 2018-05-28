@@ -23,6 +23,7 @@ class Block(sheepts.StringMixin):
         self.transactions = transactions
         self.proof_of_work = proof_of_work
         self.previous_hash = previous_hash
+
         self.timestamp = utc_now()
         self.hash = compute_hash(
             self.index,
@@ -52,7 +53,7 @@ class Block(sheepts.StringMixin):
 
 
 class GenesisBlock(Block):
-    def __init__(self, t):
+    def __init__(self):
         super(GenesisBlock, self).__init__(0, [], 0, "0")
 
 
@@ -67,11 +68,11 @@ class PoWByNumLetters(sheepts.StringMixin):
 
     def __call__(self, last_proof):
         proof = last_proof + 1
-        while not self.is_valid_proof(last_proof, proof):
+        while not self.is_valid(last_proof, proof):
             proof += 1
         return proof
 
-    def is_valid_proof(self, last_proof, proof):
+    def is_valid(self, last_proof, proof):
         return proof % self.num == 0 and proof % last_proof == 0
 
 
@@ -85,11 +86,11 @@ class PoWByHashHead(sheepts.StringMixin):
 
     def __call__(self, last_proof):
         proof = 0
-        while not self.is_valid_proof(last_proof, proof):
+        while not self.is_valid(last_proof, proof):
             proof += 1
         return proof
 
-    def is_valid_proof(self, last_proof, proof):
+    def is_valid(self, last_proof, proof):
         return compute_hash(last_proof, proof).startswith(self.valid_head)
 
 
@@ -100,18 +101,28 @@ class BlockChain(sheepts.StringMixin):
         self.unconfirmed_transactions = unconfirmed_transactions
 
     def mine(self, miner_address):
-        proof = self.get_proof_of_work(self.last_proof_of_work)
+        proof = self.proof_of_work(self.last_proof_of_work)
         self.add_transaction("network", miner_address, 1)
         new_block = self.last_block.next_block(
             transactions=list(self.unconfirmed_transactions),
             proof_of_work=proof
         )
-        self.chain.append(new_block)
-        self.unconfirmed_transactions = []
+        if self.add_block(new_block):
+            self.unconfirmed_transactions = []
         return new_block.dumps()
 
-    def add_proof(self):
-        pass
+    def add_block(self, block):
+        is_valid_proof = self.proof_of_work.is_valid(
+            self.last_proof_of_work, block.proof_of_work
+        )
+        if block.previous_hash == self.last_block.hash and is_valid_proof:
+            self.chain.append(block)
+            return True
+        return False
+
+    @sheepts.lazy_property
+    def proof_of_work(self):
+        return PoWByHashHead()
 
     def add_transaction(self, from_, to, amount):
         transaction = {
@@ -120,10 +131,6 @@ class BlockChain(sheepts.StringMixin):
             "amount": amount
         }
         self.unconfirmed_transactions.append(transaction)
-
-    @sheepts.lazy_property
-    def get_proof_of_work(self):
-        return PoWByHashHead()
 
     @property
     def last_proof_of_work(self):

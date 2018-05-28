@@ -28,7 +28,7 @@ class BlockTest(TestCase):
     def _load_block_and_hash(self):
         return [
             (self.block, self.block_hash),
-            (base.GenesisBlock(3.14159),
+            (base.GenesisBlock(),
              "675365444072aa216c29e4d3764632ab5f77f5d8489e1d"
              "6020c381bddba3a9ad"),
             (self.block.next_block([2.015], 45),
@@ -73,23 +73,24 @@ class BlockTest(TestCase):
 
 class BlockChainTest(TestCase):
     def setUp(self):
-        genesis_block = base.GenesisBlock("Genesis")
-        blocks = [
-            genesis_block,
-            genesis_block.next_block([], 25)
-        ]
+        self.genesis_block = base.GenesisBlock()
+        blocks = [self.genesis_block]
         self.block_chain = base.BlockChain(blocks, [])
 
     def test_last_proof_of_work(self):
-        assert 25 == self.block_chain.last_proof_of_work
+        assert 0 == self.block_chain.last_proof_of_work
 
     def test_mine(self):
         miner_address = "d6a782ef"
         new_block_json = self.block_chain.mine(miner_address)
         new_block = base.Block.from_json(new_block_json)
-        assert 85022 == new_block.proof_of_work
+        assert 69732 == new_block.proof_of_work
         assert 1 == len(new_block.transactions)
         assert miner_address == new_block.transactions[-1]["to"]
+
+    def test_add_block_wrong_proof(self):
+        block = self.genesis_block.next_block([], 25)
+        assert not self.block_chain.add_block(block)
 
 
 @parameterized.expand([
