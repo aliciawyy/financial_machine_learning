@@ -15,10 +15,9 @@ def utc_now():
     return datetime.utcnow()
 
 
-def get_hash_hex(*args):
-    sha = hashlib.sha256()
+def compute_hash(*args):
     info = str.encode("".join(map(str, args)))
-    sha.update(info)
+    sha = hashlib.sha256(info)
     return sha.hexdigest()
 
 
@@ -27,9 +26,9 @@ class Block(sheepts.StringMixin):
     def __init__(self, index, data, previous_hash):
         self.index = index
         self.data = data
-        self.timestamp = utc_now()
         self.previous_hash = previous_hash
-        self.hash = get_hash_hex(
+        self.timestamp = utc_now()
+        self.hash = compute_hash(
             self.index, self.data, self.timestamp, self.previous_hash
         )
 
@@ -71,16 +70,17 @@ class PoWByNumLetters(sheepts.StringMixin):
     The goal of PoW is to discover a number which solves a problem.
     The number must be difficult to find but easy to verify.
     """
-    def __init__(self, num_letters=9):
-        self.num_letters = num_letters
+    def __init__(self, num=9):
+        self.num = num
 
     def __call__(self, last_proof):
-        current_proof = last_proof + 1
-        while not (
-                current_proof % self.num_letters == 0 and
-                current_proof % last_proof == 0):
-            current_proof += 1
-        return current_proof
+        proof = last_proof + 1
+        while not self.is_valid_proof(last_proof, proof):
+            proof += 1
+        return proof
+
+    def is_valid_proof(self, last_proof, proof):
+        return proof % self.num == 0 and proof % last_proof == 0
 
 
 class PoWByHashHead(sheepts.StringMixin):
@@ -93,33 +93,34 @@ class PoWByHashHead(sheepts.StringMixin):
 
     def __call__(self, last_proof):
         proof = 0
-        while get_hash_hex(last_proof, proof)[:self.head_len] != \
-                self.valid_head:
+        while not self.is_valid_proof(last_proof, proof):
             proof += 1
         return proof
 
-    @sheepts.lazy_property
-    def head_len(self):
-        return len(self.valid_head)
+    def is_valid_proof(self, last_proof, proof):
+        return compute_hash(last_proof, proof).startswith(self.valid_head)
 
 
 class BlockChain(sheepts.StringMixin):
 
-    def __init__(self, blocks, transactions_current_node):
-        self.blocks = blocks
-        self.transactions_current_node = transactions_current_node
+    def __init__(self, chain_, unconfirmed_transactions):
+        self.chain = chain_
+        self.unconfirmed_transactions = unconfirmed_transactions
 
     def mine(self, miner_address):
         proof = self.get_proof_of_work(self.last_proof_of_work)
         self.add_transaction("network", miner_address, 1)
         data = {
             BlockTag.proof_of_work: proof,
-            BlockTag.transactions: list(self.transactions_current_node)
+            BlockTag.transactions: list(self.unconfirmed_transactions)
         }
         new_block = self.last_block.next_block(data)
-        self.blocks.append(new_block)
-        self.transactions_current_node = []
+        self.chain.append(new_block)
+        self.unconfirmed_transactions = []
         return new_block.dumps()
+
+    def add_proof(self):
+        pass
 
     def add_transaction(self, from_, to, amount):
         transaction = {
@@ -127,7 +128,7 @@ class BlockChain(sheepts.StringMixin):
             "to": to,
             "amount": amount
         }
-        self.transactions_current_node.append(transaction)
+        self.unconfirmed_transactions.append(transaction)
 
     @sheepts.lazy_property
     def get_proof_of_work(self):
@@ -139,4 +140,4 @@ class BlockChain(sheepts.StringMixin):
 
     @property
     def last_block(self):
-        return self.blocks[-1]
+        return self.chain[-1]
